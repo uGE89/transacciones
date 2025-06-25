@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4285f4; --secondary-color: #34a853; --error-color: #d93025;
+            --warning-color: #f9ab00; --info-color: #1a73e8; --success-color: #1e8e3e;
+            --font-color: #3c4043; --bg-color: #f8f9fa; --card-bg: #ffffff;
+            --border-color: #dadce0; --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-hover: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            --suggestion-bg: #e8f0fe;
+        }
+        body { font-family: 'Roboto', Arial, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--font-color); line-height: 1.6; }
+        .container { padding: 20px; max-width: 1200px; margin: auto; }
+        h1 { color: var(--primary-color); display: flex; align-items: center; gap: 10px; font-weight: 400; font-size: 2em; margin-bottom: 25px; }
+        
+        .caja-selector-container { background-color: var(--card-bg); padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 15px; }
+        .caja-selector-container label { font-weight: 500; font-size: 1.1em; color: var(--font-color); }
+        .caja-selector-container .select2-container { flex-grow: 1; max-width: 450px; }
+        .controles { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background-color: var(--card-bg); padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: var(--shadow); }
+        .filtros { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; flex-grow: 1; }
+        .filtros label { font-weight: 500; font-size: 0.85em; color: #5f6368;}
+        .filtros input, .filtros select { padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9em; }
+        .acciones-principales { display: flex; gap: 10px; padding-left: 20px; }
+        
+        .btn-accion { color: white; border: none; font-weight: 500; cursor: pointer; padding: 10px 18px; border-radius: 4px; transition: background-color 0.2s; }
+        .btn-primary { background-color: var(--primary-color); }
+        .btn-primary:hover { background-color: #3367d6; }
+        .btn-secondary { background-color: var(--secondary-color); }
+        .btn-secondary:hover { background-color: #2c8e44; }
+        .btn-secondary:disabled { background-color: #bdbdbd; cursor: not-allowed; }
+        .btn-neutral { background-color: #f1f3f4; color: var(--font-color); }
+        .btn-neutral:hover { background-color: #e8eaed; }
+        .btn-imprimir { background-color: #5f6368; }
+        .btn-imprimir:hover { background-color: #4b4f53; }
+
+        #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; margin-top: 20px; }
+        
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: var(--shadow); padding: 0; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease; overflow: hidden; }
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+
+        .card-content { padding: 15px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1;}
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; }
+        .card-header-main { flex: 1; min-width: 0; }
+        .card-title { font-size: 1.2em; font-weight: 500; color: var(--font-color); margin: 0; word-break: break-word; }
+        .card-header-amount { display: flex; align-items: center; gap: 8px; }
+        .amount-value { font-size: 1.5em; font-weight: 700; letter-spacing: -0.5px; }
+        .amount-icon { font-size: 1.3em; padding-bottom: 4px; }
+        .amount-value.amount-in { color: var(--success-color); }
+        .amount-value.amount-out { color: var(--error-color); }
+        .amount-value.amount-failed { color: var(--warning-color); }
+
+        .card-observations { font-size: 0.95em; color: #5f6368; line-height: 1.5; margin: 5px 0; word-break: break-word; }
+        .card-details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 10px 0; border-top: 1px solid #f1f3f4; border-bottom: 1px solid #f1f3f4; }
+        .card-detail { font-size: 0.9em; color: #5f6368; display: flex; align-items: center; gap: 8px; }
+        .card-detail strong { color: var(--font-color); font-weight: 500; }
+        .icon { font-size: 1.1em; }
+        
+        .card-footer-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background-color: #f8f9fa; }
+        .bank-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.8em;
+            font-weight: 500;
+            color: white;
+            /* Estilos para evitar el salto de línea y manejar el desbordamiento */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 160px; /* Ajusta este valor según sea necesario */
+            vertical-align: middle; /* Ayuda a la alineación vertical con otros elementos */
+        }
+        .footer-actions { display: flex; align-items: center; gap: 10px; }
+        .status-tag { display: inline-block; padding: 4px 12px; border-radius: 16px; font-size: 0.8em; font-weight: 500; line-height: 1.4; }
+        .status-tag.status-warning, .btn-approve { background-color: var(--warning-color); color: #202124; border:none; font-family: 'Roboto', sans-serif;}
+        .status-tag.status-info { background-color: var(--info-color); color: white; }
+        .status-tag.status-success { background-color: var(--success-color); color: white; }
+        .status-tag.actionable, .btn-approve { cursor: pointer; }
+        .status-tag.actionable:hover, .btn-approve:hover { opacity: 0.85; }
+
+        .actions-menu-container { position: relative; }
+        .actions-menu-button { background-color: transparent; border: none; cursor: pointer; font-size: 1.5em; line-height: 1; padding: 4px 8px; border-radius: 50%; color: #5f6368; }
+        .actions-menu-button:hover { background-color: #f1f3f4; }
+        .actions-menu { display: none; position: absolute; bottom: 100%; right: 0; background-color: var(--card-bg); border-radius: 8px; box-shadow: var(--shadow-hover); border: 1px solid var(--border-color); list-style: none; padding: 8px 0; margin: 0 0 4px 0; z-index: 10; min-width: 220px; }
+        .actions-menu.visible { display: block; }
+        .actions-menu li button, .actions-menu li a { display: flex; align-items: center; gap: 10px; background: none; border: none; width: 100%; padding: 8px 16px; text-align: left; cursor: pointer; font-size: 0.9em; color: var(--font-color); text-decoration: none; }
+        .actions-menu li button:hover, .actions-menu li a:hover { background-color: #f1f3f4; }
+        #cargando { font-size: 1.2em; text-align: center; padding: 40px; color: #5f6368;}
+        #contador { text-align: right; color: #5f6368; font-size: 0.9em; margin: 15px 0; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; overflow-y: auto; }
+        .modal-content { background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .modal-content h2 { margin-top: 0; color: var(--primary-color); }
+        .modal-content label { display: block; margin-top: 10px; margin-bottom: 5px; font-weight: 500; }
+        .modal-content select, .modal-content input, .modal-content textarea, .modal-content button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid var(--border-color); box-sizing: border-box; }
+        .modal-buttons { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+        .modal-buttons button { width: auto; }
+        .modal-close-button { float: right; font-size: 1.5em; cursor: pointer; color: #aaa; line-height: 1; background: none; border: none; padding: 0; margin: 0; }
+        .modal-close-button:hover { color: #333; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-grid .full-width { grid-column: 1 / -1; }
+        .tabs-container { display: flex; margin-top: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 0; }
+        .tab-link { padding: 10px 20px; cursor: pointer; border: none; border-bottom: 3px solid transparent; background-color: transparent; font-size: 1em; color: var(--font-color); margin-right: 8px; transition: color 0.2s, border-color 0.2s; outline: none; }
+        .tab-link:hover { color: var(--primary-color); }
+        .tab-link.active { color: var(--primary-color); font-weight: 500; border-bottom: 3px solid var(--primary-color); }
+        
+        #ui-message-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 6px; box-shadow: var(--shadow); z-index: 2000; font-size: 0.95em; font-weight: 500; display: none; color: white; text-align: center; min-width: 250px; max-width: 80%; }
+        #ui-message-container.success { background-color: var(--success-color); }
+        #ui-message-container.error { background-color: var(--error-color); }
+        #ui-message-container.info { background-color: var(--primary-color); }
+        #ui-message-container.warning { background-color: var(--warning-color); color: #202124; }
+        .asistente-sugerencia { background-color: var(--suggestion-bg) !important; }
+
+        .tipo-btn-container { display: flex; gap: 10px; }
+        .tipo-btn { flex: 1; padding: 12px; font-size: 1em; font-weight: 500; border: 2px solid var(--border-color); background-color: #f1f1f1; color: #555; border-radius: 5px; cursor: pointer; transition: all 0.2s ease-in-out; }
+        .tipo-btn.ingreso.active { background-color: var(--success-color); color: white; border-color: var(--success-color); }
+        .tipo-btn.egreso.active { background-color: var(--error-color); color: white; border-color: var(--error-color); }
+        #add-quantity.borde-ingreso { border: 2px solid var(--success-color); }
+        #add-quantity.borde-egreso { border: 2px solid var(--error-color); }
+        
+        .resumen-inteligente { margin-top: 15px; padding: 12px; border-radius: 5px; background-color: #f8f9fa; border: 1px dashed var(--border-color); text-align: center; font-weight: 500; color: #5f6368; min-height: 20px; transition: all 0.3s;}
+        .resumen-inteligente.ingreso { color: var(--success-color); border-color: var(--success-color); }
+        .resumen-inteligente.egreso { color: var(--error-color); border-color: var(--error-color); }
+        
+        #pin-error { color: var(--error-color); font-weight: 500; margin-top: 10px; text-align: center; display: none; }
+        #pin-input { text-align: center; font-size: 1.5em; letter-spacing: 5px; }
+
+/* --- ESTILOS DE IMPRESIÓN --- */
+/* --- ESTILOS DE IMPRESIÓN --- */
+@media print {
+    /* ============================================= */
+    /* ==       ESTILOS GENERALES DE IMPRESIÓN      == */
+    /* ============================================= */
+
+    body {
+        background-color: #fff;
+    }
+
+    /* Oculta elementos no deseados y muestra los exclusivos de impresión */
+    .no-print {
+        display: none !important;
+    }
+
+    .print-only {
+        display: block !important; /* Aseguramos que se muestre */
+    }
+
+    .container {
+        max-width: 100%;
+        padding: 0;
+    }
+
+    /* ============================================= */
+    /* ==       ENCABEZADO, PIE Y RESUMEN         == */
+    /* ============================================= */
+
+    .print-header,
+    #print-dynamic-header {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.2em;
+    }
+
+    #print-dynamic-header h1 {
+        margin: 0;
+    }
+    
+    #print-dynamic-summary {
+        font-size: 1.1em;
+        line-height: 1.6;
+        padding: 15px;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+    }
+    
+    .print-footer {
+        position: fixed; /* Fija el pie en la parte inferior de cada página */
+        bottom: 10px;
+        width: 100%;
+        text-align: center;
+        font-size: 0.8em;
+        color: #666;
+    }
+
+    /* ============================================= */
+    /* == ESTILOS PARA TARJETAS DE TRANSACCIÓN ('card') == */
+    /* ============================================= */
+
+    /* Estilo base para todas las tarjetas al imprimir */
+    #card-container {
+        display: block;
+    }
+
+    .card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+        page-break-inside: avoid; /* Evita que la tarjeta se corte entre páginas */
+    }
+
+    /* --- Modo de impresión para UNA SOLA TARJETA --- */
+    body.printing-single-card .card:not(.printable-card) {
+        display: none !important;
+    }
+
+    body.printing-single-card .card.printable-card {
+        display: block !important;
+        width: 100%;
+        border: 2px solid #000;
+        box-shadow: none;
+    }
+    /* --- Fin modo una sola tarjeta --- */
+
+    /* Oculta elementos interactivos dentro de la tarjeta imprimible */
+    .card.printable-card .actions-menu-container,
+    .card.printable-card .footer-actions {
+        display: none !important;
+    }
+
+    /* Adapta las etiquetas para impresión en blanco y negro */
+    .card.printable-card .status-tag,
+    .card.printable-card .bank-tag {
+        background-color: #ffffff !important;
+        border: 2px solid #000;
+        color: #000000 !important;
+    }
+
+    /* Controla el tamaño de la imagen adjunta */
+    .card.printable-card .transaction-image {
+        max-width: 100%;
+        max-height: 7cm; /* Límite estricto para la altura */
+        object-fit: contain; /* Escala sin deformar */
+    }
+
+    /* Añade una línea de firma al final de la tarjeta */
+    .card.printable-card::after {
+        content: "Firma del Responsable: _________________________";
+        display: block;
+        padding: 40px 15px 20px 15px;
+        text-align: center;
+        font-weight: 500;
+        color: #000;
+    }
+}
+
+        /* ESTILOS PARA LA VISTA EN PANTALLA (Estos ya estaban bien) */
+        .card-image-container {
+            padding: 15px 0;
+            text-align: center;
+        }
+        .transaction-image {
+            max-width: 80%;
+            height: auto;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            display: block;
+            margin: auto;
+        }
+        .image-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background-color: #f1f3f4;
+            border: 1px dashed #dadce0;
+            border-radius: 4px;
+            color: #5f6368;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: default;
+        }
+
+        .dashboard-card {
+  background: #222e3c;
+  color: #fff;
+  border-radius: 12px;
+  padding: 18px 24px;
+  min-width: 180px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+}
+.dash-titulo {
+  font-size: 1.1em;
+  color: #b0b8c4;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+.dash-monto {
+  font-size: 2.1em;
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-top: 3px;
+}
+#dash-ingresos .dash-monto { color: #32e67f; }
+#dash-egresos .dash-monto { color: #fc5252; }
+#dash-balance .dash-monto { color: #ffd600; }
+@media (max-width: 900px) {
+  #dashboard-financiero { flex-direction: column; gap: 14px; }
+  .dashboard-card { min-width: 0; }
+}
+
+.badge {
+    background: #222e3c;
+    color: #ffd600;
+    border-radius: 10px;
+    font-size: 0.85em;
+    font-weight: 700;
+    padding: 2px 9px;
+    margin-left: 7px;
+    vertical-align: middle;
+}
+.tab-link.active .badge {
+    background: #ffd600;
+    color: #222e3c;
+}
+.card-category-subtitle {
+    font-size: 1em;
+    font-style: italic;
+    color: #5f6368;
+    margin: 4px 0 0 0;
+    font-weight: 400;
+}
+
+.card-details-list {
+    padding: 10px 0;
+    border-top: 1px solid #f1f3f4;
+    border-bottom: 1px solid #f1f3f4;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Espacio entre cada línea de detalle */
+    font-size: 0.9em;
+}
+.detail-item {
+    display: flex;
+    justify-content: space-between; /* Alinea etiqueta a la izq y valor a la der */
+}
+.detail-label {
+    color: #5f6368;
+    font-weight: 500;
+}
+.detail-value {
+    color: var(--font-color);
+    font-weight: 400;
+}
+/* Oculta los elementos de impresión en la vista de pantalla */
+.print-only {
+    display: none;
+}
+
+/* --- NUEVOS ESTILOS PARA EL SELECTOR DE CUOTAS PRESENTABLE --- */
+.select2-result-cuota {
+    line-height: 1.4;
+    padding: 6px 0;
+}
+.select2-result-cuota__monto {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--font-color);
+}
+.select2-result-cuota__fecha {
+    font-size: 0.9em;
+    color: #5f6368;
+}
+.select2-result-cuota__id {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 2px;
+}
+
+    </style>
+</head>
+<body>
+  
+  <div id="print-dynamic-header" class="print-only"></div>
+    <div id="print-dynamic-summary" class="print-only"></div>
+
+
+
+
+
+    <div id="ui-message-container" class="no-print"></div>
+    <div class="container">
+        </div>
+
+    <div class="print-only print-footer">
+        <p>Documento generado el: <span id="print-date"></span></p>
+  </div>
+
+
+    <div id="ui-message-container" class="no-print"></div>
+    <div class="container">
+        <h1 class="no-print">Visor y Procesador de Transacciones</h1>
+
+        <!-- DASHBOARD FINANCIERO -->
+<div id="dashboard-financiero" class="no-print" style="display: flex; gap: 24px; margin-bottom: 25px;">
+  <div class="dashboard-card" id="dash-ingresos">
+    <div class="dash-titulo">Ingresos</div>
+    <div class="dash-monto" id="monto-ingresos">C$ 0.00</div>
+  </div>
+  <div class="dashboard-card" id="dash-egresos">
+    <div class="dash-titulo">Egresos</div>
+    <div class="dash-monto" id="monto-egresos">C$ 0.00</div>
+  </div>
+  <div class="dashboard-card" id="dash-balance">
+    <div class="dash-titulo">Balance</div>
+    <div class="dash-monto" id="monto-balance">C$ 0.00</div>
+  </div>
+</div>
+
+<div class="caja-selector-container no-print" style="display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <label for="caja-selector"><strong>Caja Activa:</strong></label>
+        <select id="caja-selector"></select>
+    </div>
+    
+    <div class="acciones-principales">
+        <button id="btn-imprimir-vista" class="btn-accion btn-imprimir">Imprimir Vista</button>
+        <button id="btn-abrir-modal-agregar" class="btn-accion btn-primary">Agregar Transacción</button>
+        <button id="btn-procesar" class="btn-accion btn-secondary">Actualizar depósitos</button>
+    </div>
+</div>
+
+
+<div class="controles no-print">
+    <div class="filtros">
+        <label>Desde:</label> <input type="date" id="fecha-inicio">
+        <label>Hasta:</label> <input type="date" id="fecha-fin">
+        <label>Tipo:</label>
+        <select id="tipo">
+            <option value="">Todos</option>
+            <option value="in">In</option>
+            <option value="out">Out</option>
+            <option value="failed">Failed</option>
+        </select>
+        <label>Descripción:</label> <input type="text" id="descripcion" placeholder="Buscar...">
+    </div>
+    </div>
+        
+<!-- PESTAÑAS DE ESTADO -->
+<div class="tabs-container no-print" id="tabs-estados">
+    <button class="tab-link active" data-tab-filter="todas">
+        Todas <span class="badge" id="tab-todas-badge">0</span>
+    </button>
+    <button class="tab-link" data-tab-filter="pendiente">
+        Pendientes <span class="badge" id="tab-pendiente-badge">0</span>
+    </button>
+    <button class="tab-link" data-tab-filter="aprobada">
+        Aprobadas <span class="badge" id="tab-aprobada-badge">0</span>
+    </button>
+    <button class="tab-link" data-tab-filter="rechazada">
+        Rechazadas <span class="badge" id="tab-rechazada-badge">0</span>
+    </button>
+    <button class="tab-link" data-tab-filter="sin-id-alegra">
+        Sin ID Alegra <span class="badge" id="tab-sinidalegra-badge">0</span>
+    </button>
+</div>
+
+
+        <div id="contador" class="no-print"></div>
+        <div id="cargando" class="no-print">Cargando datos, por favor espera... <span class="icon">⏳</span></div>
+        <div id="card-container"></div>
+
+
+
+
+        <!-- Modales -->
+        <div id="edit-modal" class="modal-overlay no-print">
+
+              <div class="modal-content">
+                  <button class="modal-close-button" data-modal-id="edit-modal">×</button>
+                  <h2>Editar Cliente/Categoría</h2>
+
+                 
+
+                  <p>Transacción ID: <strong id="modal-transaccion-id"></strong></p>
+                  <div style="margin-bottom: 15px;">
+                      <label for="modal-cliente-select">Cliente:</label>
+                      <select id="modal-cliente-select"><option value="">-- Selecciona Cliente --</option></select>
+                  </div>
+                  <div style="margin-bottom: 15px;">
+                      <label for="modal-categoria-select">Categoría:</label>
+                      <select id="modal-categoria-select"><option value="">-- Selecciona Categoría --</option></select>
+                  </div>
+                  <div class="modal-buttons">
+                      <button type="button" class="btn-accion btn-neutral" data-modal-id="edit-modal">Cancelar</button>
+                      <button id="btn-guardar-cambios-modal" class="btn-accion btn-primary">Guardar Cambios</button>
+                  </div>
+              </div>
+        </div>
+        
+        <div id="add-modal" class="modal-overlay no-print">
+            <div class="modal-content">
+                <button class="modal-close-button" data-modal-id="add-modal">×</button>
+                <h2>Agregar Nueva Transacción</h2>
+                <form id="add-transaction-form">
+
+    <div class="full-width">
+        <label for="plantilla-select">Usar Plantilla (Opcional)</label>
+        <select id="plantilla-select">
+            <option value="">-- Ninguna (Registro Manual) --</option>
+        </select>
+    </div>
+
+    <div class="form-grid">
+        <div class="full-width">
+            <label>Tipo *</label>
+            <div class="tipo-btn-container">
+                <button type="button" class="tipo-btn ingreso" data-tipo="in">[+] Ingreso</button>
+                <button type="button" class="tipo-btn egreso" data-tipo="out">[-] Egreso</button>
+            </div>
+            <input type="hidden" id="add-tipo" required>
+        </div>
+        
+        <div>
+            <label for="add-fecha">Fecha *</label>
+            <input type="date" id="add-fecha" required>
+        </div>
+        
+        <div>
+            <label for="add-quantity">Cantidad (NIO) *</label>
+            <input type="number" id="add-quantity" step="0.01" min="0" placeholder="Ej: 1500.50" required>
+        </div>
+        
+        <div>
+            <label for="add-bankAccountId">Banco/Cuenta Origen *</label>
+            <select id="add-bankAccountId" required>
+                <option value="">-- Seleccione Banco --</option>
+            </select>
+        </div>
+        
+        <div class="full-width">
+            <label for="add-observations">Descripción / Observaciones *</label>
+            <textarea id="add-observations" rows="3" placeholder="Escribe aquí, ej: 'Pago factura #123 a La Casa del Tornillo por C$500'" required></textarea>
+        </div>
+    </div>
+
+    <div class="form-grid">
+        <div>
+            <label for="add-category-select">Categoría (Opcional)</label>
+            <select id="add-category-select">
+                <option value="">-- Selecciona Categoría --</option>
+            </select>
+        </div>
+        
+        <div>
+            <label for="add-client-select">Cliente (Opcional)</label>
+            <select id="add-client-select">
+                <option value="">-- Selecciona Cliente --</option>
+            </select>
+        </div>
+
+        <div class="full-width">
+            <label for="add-anotacion">Anotación / Referencia (Opcional)</label>
+            <input type="text" id="add-anotacion" placeholder="Ej: ID de transferencia, # de recibo">
+        </div>
+    </div>
+
+    <div id="campo-cuenta-destino" class="full-width" style="display: none; margin-top: 12px;">
+        <label for="add-cuenta-destino-select">Cuenta Destino *</label>
+        <select id="add-cuenta-destino-select"></select>
+    </div>
+
+    <div id="campos-prestamo" style="display: none; margin-top: 12px;" class="form-grid full-width">
+        <div>
+            <label for="add-prestamo-cuotas">Cantidad de Cuotas *</label>
+            <input type="number" id="add-prestamo-cuotas" min="1" value="1">
+        </div>
+        <div>
+            <label for="add-prestamo-fecha-inicio">Fecha del Primer Pago *</label>
+            <input type="date" id="add-prestamo-fecha-inicio">
+        </div>
+    </div>
+    
+    <div id="campo-abono-prestamo" class="full-width" style="display: none; margin-top: 12px;">
+        <label for="abono-cuota-select"><b>Selecciona Cuotas a Abonar *</b></label>
+        <select id="abono-cuota-select" multiple style="width: 100%;"></select>
+        <div id="info-cuotas-abono" style="font-size: 0.9em; color: #666; margin-top: 5px;"></div>
+    </div>
+
+    <div id="campo-cuotas-pendientes" style="display:none; margin-top: 12px;">
+        <label>Cuotas pendientes:</label>
+        <div id="lista-cuotas"></div>
+    </div>
+    
+    <div class="full-width">
+        <div id="resumen-inteligente" class="resumen-inteligente" style="margin-top: 15px;"></div>
+    </div>
+    
+    <div class="modal-buttons">
+        <button type="button" class="btn-accion btn-neutral" data-modal-id="add-modal">Cancelar</button>
+        <button type="submit" id="btn-guardar-nuevo" class="btn-accion btn-primary">Guardar Transacción</button>
+    </div>
+
+</form>
+            </div>
+        </div>
+
+        <div id="pin-modal" class="modal-overlay no-print">
+            <div class="modal-content">
+                <button class="modal-close-button" data-modal-id="pin-modal">×</button>
+                <h2>Aprobación de Supervisor Requerida</h2>
+                <p>Por favor, ingrese el PIN del supervisor para autorizar esta transacción.</p>
+                <label for="pin-input">PIN de 4 dígitos:</label>
+                <input type="password" id="pin-input" maxlength="4" pattern="\d{4}" inputmode="numeric">
+                <div id="pin-error">PIN incorrecto. Por favor, intente de nuevo.</div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-accion btn-neutral" data-modal-id="pin-modal">Cancelar</button>
+                    <button type="button" id="btn-aprobar-pin" class="btn-accion btn-primary">Aprobar</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    // --- Variables globales ---
+    let filtroTabActual = "todas", todasLasFilas = [], encabezados = [], indices = {}, idTransaccionActualParaEditar = null;
+    let mapaClientes = new Map(), mapaCategorias = new Map(), mapaBancos = new Map(), mensajeTimer = null;
+    let asistenteDebounceTimer;
+    let camposAnulados = {};
+    let idTransaccionParaAprobar = null;
+    let plantillasDisponibles = [];
+    let idTransaccion = idTransaccionParaAprobar;
+
+
+
+
+    
+    
+    // --- Funciones del Asistente y Selección Visual ---
+
+function poblarSelectCuentasDestino(bancos, cuentaOrigenId = '') {
+  const selectDestino = document.getElementById('add-cuenta-destino-select');
+  if (!selectDestino) return;
+  selectDestino.innerHTML = '<option value="">-- Seleccione Cuenta Destino --</option>';
+  (bancos || []).forEach(banco => {
+    if (String(banco.bankAccountId) !== String(cuentaOrigenId)) {
+      const option = document.createElement('option');
+      option.value = banco.bankAccountId;
+      option.textContent = banco.name;
+      selectDestino.appendChild(option);
+    }
+  });
+}
+
+
+    function seleccionarTipo(tipo) {
+        $('.tipo-btn').removeClass('active asistente-sugerencia');
+        $(`.tipo-btn[data-tipo="${tipo}"]`).addClass('active');
+        $('#add-tipo').val(tipo);
+        
+        $('#add-quantity').removeClass('borde-ingreso borde-egreso');
+        if (tipo === 'in') {
+            $('#add-quantity').addClass('borde-ingreso');
+        } else if (tipo === 'out') {
+            $('#add-quantity').addClass('borde-egreso');
+        }
+        actualizarResumenInteligente();
+    }
+
+    function actualizarResumenInteligente() {
+        const tipo = $('#add-tipo').val();
+        const cantidad = parseFloat($('#add-quantity').val()) || 0;
+        const nombreCuenta = $('#add-bankAccountId option:selected').text();
+        const resumenDiv = $('#resumen-inteligente');
+
+        resumenDiv.removeClass('ingreso egreso').text('');
+
+        if (tipo && cantidad > 0 && nombreCuenta && nombreCuenta !== '-- Seleccione Banco --') {
+            const tipoTexto = tipo === 'in' ? 'INGRESO' : 'EGRESO';
+            const cantidadFormateada = new Intl.NumberFormat('es-NI', { style: 'currency', currency: 'NIO' }).format(cantidad);
+            resumenDiv.text(`Estás registrando un ${tipoTexto} de ${cantidadFormateada} en la cuenta ${nombreCuenta}.`);
+            resumenDiv.addClass(tipo === 'in' ? 'ingreso' : 'egreso');
+        }
+    }
+    
+    function analizarDescripcionInteligentemente(texto) { /* Lógica del asistente aquí... */ }
+    function aplicarSugerencia(campo, valor, esSelect2 = false) { /* Lógica del asistente aquí... */ }
+
+    // --- Funciones de Renderizado y UI ---
+    function mostrarMensajeUI(mensaje, tipo = 'info', duracion = 4000) { const msgContainer = document.getElementById('ui-message-container'); if (!msgContainer) return; msgContainer.textContent = mensaje; msgContainer.className = `no-print ui-message-container ${tipo}`; msgContainer.style.display = 'block'; if (mensajeTimer) clearTimeout(mensajeTimer); if (duracion > 0) { mensajeTimer = setTimeout(() => { msgContainer.style.display = 'none'; }, duracion); } }
+    function handleCardClick(event) { const target = event.target; const menuButton = target.closest('[data-action="toggle-menu"]'); if (menuButton) { event.stopPropagation(); const menu = menuButton.nextElementSibling; const isVisible = menu.classList.contains('visible'); document.querySelectorAll('.actions-menu.visible').forEach(m => m.classList.remove('visible')); if (!isVisible) menu.classList.add('visible'); return; } const editActionTarget = target.closest("[data-action='edit-cc']"); if (editActionTarget) { idTransaccionActualParaEditar = editActionTarget.dataset.id; abrirModalEdicion(idTransaccionActualParaEditar); closeAllMenus(event); return; } const approveButton = target.closest("[data-action='approve-pin']"); if (approveButton) { idTransaccionParaAprobar = approveButton.dataset.id; document.getElementById('pin-error').style.display = 'none'; document.getElementById('pin-input').value = ''; document.getElementById('pin-modal').style.display = 'flex'; document.getElementById('pin-input').focus(); return; } const printButton = target.closest("[data-action='print-card']"); if (printButton) { imprimirComprobante(printButton.dataset.id); closeAllMenus(event); return; } }
+    function closeAllMenus(event) { if (event && !event.target.closest('.actions-menu-container')) { document.querySelectorAll('.actions-menu.visible').forEach(menu => menu.classList.remove('visible')); } else if (!event) { document.querySelectorAll('.actions-menu.visible').forEach(menu => menu.classList.remove('visible')); } }
+    function handleTabClick(event) { document.querySelectorAll(".tab-link").forEach(t => t.classList.remove("active")); event.target.classList.add("active"); filtroTabActual = event.target.dataset.tabFilter; aplicarFiltros(); }
+    function cerrarModal(modalId) { const modal = document.getElementById(modalId); if (modal) modal.style.display = "none"; if (modalId === 'edit-modal') idTransaccionActualParaEditar = null; }
+    
+function aplicarFiltros() {
+    const filtros = { 
+        caja: document.getElementById('caja-selector').value, 
+        fechaInicio: document.getElementById("fecha-inicio").value, 
+        fechaFin: document.getElementById("fecha-fin").value, 
+        tipo: document.getElementById("tipo").value, 
+        descripcion: document.getElementById("descripcion").value.toLowerCase() 
+    };
+
+    // Reiniciamos los contadores en cada ejecución
+    let countTodas = 0, countPendiente = 0, countAprobada = 0, countRechazada = 0, countSinIDAlegra = 0;
+
+    const filasFiltradas = todasLasFilas.filter((fila) => { 
+        if (!Array.isArray(fila) || Object.keys(indices).length === 0) return false;
+
+        // --- 1. Primero, comprobamos si la fila pasa los filtros básicos ---
+        const bankAccountId = fila[indices['bankaccountid']]; 
+        const fechaTexto = fila[indices['date']] || ""; 
+        const tipoFila = fila[indices['type']] || ""; 
+        const obs = String(fila[indices['observations']] || "").toLowerCase(); 
+
+        const pasaFiltrosBasicos = (
+            (filtros.caja === 'todos' || String(bankAccountId) === filtros.caja) &&
+            (!filtros.fechaInicio || (fechaTexto && fechaTexto >= filtros.fechaInicio)) &&
+            (!filtros.fechaFin || (fechaTexto && fechaTexto <= filtros.fechaFin)) &&
+            (!filtros.tipo || tipoFila === filtros.tipo) &&
+            (!filtros.descripcion || obs.includes(filtros.descripcion))
+        );
+
+        // Si no pasa los filtros básicos, la descartamos inmediatamente
+        if (!pasaFiltrosBasicos) {
+            return false;
+        }
+
+        // --- 2. Si pasó, AHORA SÍ incrementamos los contadores ---
+        const clienteIdActual = fila[indices['clientid']]; 
+        const categoriaIdActual = fila[indices['categoryid']]; 
+        const idAlegraActual = fila[indices['id_alegra']];
+        const estadoActual = (fila[indices['estado']] || "").toLowerCase();
+
+        countTodas++; // Solo se cuenta si pasó los filtros básicos
+        if (estadoActual === "pendiente aprobación" || estadoActual === "pendiente" || (!clienteIdActual || !categoriaIdActual)) countPendiente++;
+        if (estadoActual === "aprobada") countAprobada++;
+        if (estadoActual === "rechazada") countRechazada++;
+        if ((!idAlegraActual || idAlegraActual === "") && clienteIdActual && categoriaIdActual) countSinIDAlegra++;
+
+        // --- 3. Finalmente, filtramos por la pestaña activa ---
+        switch (filtroTabActual) {
+            case "pendiente":
+                return (estadoActual === "pendiente aprobación" || estadoActual === "pendiente" || (!clienteIdActual || !categoriaIdActual));
+            case "aprobada":
+                return (estadoActual === "aprobada");
+            case "rechazada":
+                return (estadoActual === "rechazada");
+            case "sin-id-alegra":
+                return ((!idAlegraActual || idAlegraActual === "") && clienteIdActual && categoriaIdActual);
+            default: // "todas"
+                return true; // Ya sabemos que pasó los filtros básicos, así que se muestra
+        }
+    });
+
+    // Actualizar badges (ahora con los valores correctos)
+    document.getElementById('tab-todas-badge').textContent = countTodas;
+    document.getElementById('tab-pendiente-badge').textContent = countPendiente;
+    document.getElementById('tab-aprobada-badge').textContent = countAprobada;
+    document.getElementById('tab-rechazada-badge').textContent = countRechazada;
+    document.getElementById('tab-sinidalegra-badge').textContent = countSinIDAlegra;
+
+    // Dibuja y actualiza dashboard
+    dibujarTarjetas(filasFiltradas);
+    updateDashboard(filasFiltradas);
+}
+
+    
+   function dibujarTarjetas(filas) {
+    const container = document.getElementById("card-container");
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (filas.length === 0) {
+        container.innerHTML = `<p style="text-align:center; padding:20px; color: #5f6368;">No hay transacciones que coincidan con los filtros.</p>`;
+        return;
+    }
+
+    filas.forEach((fila) => {
+        try {
+            const transaccionIdUnico = fila[indices['id']] || '';
+            const tipoOriginal = fila[indices['type']] || 'N/A';
+            const cantidad = parseFloat(fila[indices['quantity']]) || 0;
+
+            const tipoInfo = {
+                in: { icono: '📥' },
+                out: { icono: '📤' },
+                failed: { icono: '⚠️' }
+            }[tipoOriginal] || { icono: '⚪' };
+
+            const amountColorClass = {
+                in: 'amount-in',
+                out: 'amount-out',
+                failed: 'amount-failed'
+            }[tipoOriginal] || '';
+
+            const formattedAmount = new Intl.NumberFormat('es-NI', {
+                style: 'currency',
+                currency: 'NIO'
+            }).format(cantidad);
+
+            const bankId = fila[indices['bankaccountid']] || '';
+            const bankInfo = mapaBancos.get(String(bankId)) || { name: `ID: ${bankId}`, color: '#78909c' };
+            const bankColor = bankInfo.color?.startsWith('#') ? bankInfo.color : '#78909c';
+
+            const anotacion = fila[indices['anotation']];
+            const idAlegra = fila[indices['id_alegra']];
+const clienteIdFila = fila[indices['clientid']];
+const categoriaIdFila = fila[indices['categoryid']];
+const nombreCliente = mapaClientes.get(String(clienteIdFila).trim());
+const nombreCategoria = mapaCategorias.get(String(categoriaIdFila).trim());
+
+
+
+            const tituloPrincipal = nombreCliente || nombreCategoria || "Transacción General";
+
+            const estadoActual = (fila[indices['estado']] || "").toLowerCase();
+const nombreArchivo = (fila[indices['origen']] || "").trim();
+            // Condición para mostrar botón de aprobación con PIN
+const puedeAprobar = (
+    (estadoActual === "pendiente" || estadoActual === "pendiente aprobación") &&
+    // Se ha eliminado la condición que verificaba el origen "Registro manual"
+    clienteIdFila && categoriaIdFila
+);
+
+ // LÍNEA DE PRUEBA QUE DEBES AGREGAR:
+console.log(`ID: ${transaccionIdUnico}, Estado: ${estadoActual}, Nombre Archivo: "${nombreArchivo}", Resultado puedeAprobar: ${puedeAprobar}`);
+
+let estadoHTML = '';
+if (puedeAprobar) {
+                 estadoHTML = `<button class="btn-accion btn-approve" data-action="approve-pin" data-id="${transaccionIdUnico}">Aprobar con PIN</button>`;
+            } else if (tipoOriginal !== 'failed') {
+                if (!clienteIdFila || !categoriaIdFila) {
+                    estadoHTML = `<span class="status-tag status-warning actionable" data-action="edit-cc" data-id="${transaccionIdUnico}">⚠️ Falta Cliente/Categoría</span>`;
+                } else if (!idAlegra) {
+                    estadoHTML = `<span class="status-tag status-info">🚀 Pendiente Registro Alegra</span>`;
+                } else if (estadoActual === "aprobada") {
+                    estadoHTML = `<span class="status-tag status-success">✅ Completado</span>`;
+                } else if (estadoActual === "rechazada") {
+                    estadoHTML = `<span class="status-tag status-error">❌ Rechazada</span>`;
+                }
+            }
+
+            const imageUrl = fila[indices['direcciónimagen']];
+            const imageHTML = imageUrl ? `
+                <div class="card-image-container" data-src="${imageUrl}">
+                    <div class="image-placeholder">
+                        <span class="icon">📄</span>
+                        <span>Comprobante adjunto (visible al imprimir)</span>
+                    </div>
+                </div>` : '';
+
+            const cardHTML = `
+                <div class="card-content">
+                    <div class="card-header">
+                        <div class="card-header-main">
+                            <h3 class="card-title">${tituloPrincipal}</h3>
+                            ${nombreCategoria ? `<div class="card-detail"><strong><span class="icon">🗂️</span></strong> ${nombreCategoria}</div>` : ''}
+
+                        </div>
+                        <div class="card-header-amount">
+                            <span class="amount-value ${amountColorClass}">${formattedAmount}</span>
+                            <span class="amount-icon">${tipoInfo.icono}</span>
+                        </div>
+                    </div>
+                    <p class="card-observations">${fila[indices['observations']] || 'Sin descripción'}</p>
+<div class="card-details-list">
+    <div class="detail-item">
+        <span class="detail-label">Fecha:</span>
+        <span class="detail-value">${fila[indices['date']] || 'Sin fecha'}</span>
+    </div>
+    ${anotacion ? `
+    <div class="detail-item">
+        <span class="detail-label">Referencia:</span>
+        <span class="detail-value">${anotacion}</span>
+    </div>` : ''}
+    <div class="detail-item">
+        <span class="detail-label">Transacción #:</span>
+        <span class="detail-value">${transaccionIdUnico}</span>
+    </div>
+</div>
+                    ${imageHTML}
+                </div>
+                <div class="card-footer-bar">
+                    <span class="bank-tag" style="background-color: ${bankColor};">${bankInfo.name}</span>
+                    <div class="footer-actions">
+                        ${estadoHTML}
+                        <div class="actions-menu-container">
+                            <button class="actions-menu-button" data-action="toggle-menu" aria-label="Abrir menú de acciones">⋮</button>
+                            <ul class="actions-menu">
+                                <li><button data-action="edit-cc" data-id="${transaccionIdUnico}">✏️ Editar C/C</button></li>
+                                <li><button data-action="print-card" data-id="${transaccionIdUnico}">🖨️ Imprimir Comprobante</button></li>
+                                ${imageUrl ? `<li><a href="${imageUrl}" target="_blank" rel="noopener noreferrer">🔗 Ver Imagen</a></li>` : ''}
+                            </ul>
+                        </div>
+                    </div>
+                </div>`;
+
+            const card = document.createElement("div");
+            card.className = "card";
+            card.dataset.id = transaccionIdUnico;
+            card.innerHTML = cardHTML;
+            container.appendChild(card);
+        } catch (error) {
+            console.error(`Error al crear tarjeta:`, error, "Datos de fila:", fila);
+        }
+    });
+
+    document.getElementById("contador").textContent = `Mostrando ${filas.length} de ${todasLasFilas.length} registros.`;
+}
+ 
+
+    
+    // --- Funciones que interactúan con Google Apps Script ---
+    function errorServidor(error) {
+        console.error("Error del servidor:", error);
+        mostrarMensajeUI("Error: " + (error.message || "Error desconocido del servidor."), 'error', 10000);
+        document.getElementById("cargando").textContent = `Error al cargar. Por favor, recargue la página.`;
+    }
+
+/**
+ * Carga todos los datos necesarios para la aplicación de forma paralela,
+ * actualiza la UI y maneja los estados de carga y error.
+ * AHORA USA ACCESO A PROPIEDADES DE OBJETOS (ej. fila.id).
+ */
+function cargarDatosIniciales() {
+    console.log("Iniciando carga de datos...");
+    const cargandoDiv = document.getElementById("cargando");
+    cargandoDiv.style.display = 'block';
+    cargandoDiv.textContent = "Cargando configuración...";
+
+    // La función auxiliar ahora accede a las propiedades .id y .nombre.
+    const poblarMapaSimple = (mapa, datos) => {
+        mapa.clear();
+        (datos || []).forEach(fila => { // Añadido (datos || []) para más seguridad
+            const id = String(fila.id);
+            const nombre = fila.nombre;
+            if (id && nombre) {
+                mapa.set(id, nombre);
+            }
+        });
+    };
+
+    // Las promesas se mantienen igual.
+    const pBancos = new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getBancosLista());
+    const pClientes = new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getClientesLista());
+    const pCategorias = new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getCategoriasLista());
+    const pTransacciones = new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).obtenerTransacciones());
+    const pPlantillas = new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).obtenerPlantillas());
+
+    Promise.all([pBancos, pClientes, pCategorias, pTransacciones, pPlantillas])
+        .then(([bancos, clientes, categorias, transacciones, plantillas]) => {
+            console.log("Todos los datos han sido cargados exitosamente.");
+            cargandoDiv.textContent = "¡Listo!";
+
+            // Se actualiza la lógica para poblar mapaBancos usando propiedades.
+            mapaBancos.clear();
+            (bancos || []).forEach(fila => {
+                const id = String(fila.bankAccountId);
+                const nombre = fila.name;
+                if (id && nombre) {
+                    mapaBancos.set(id, { name: nombre, color: fila.color || '#78909c' });
+                }
+            });
+
+            // Usamos la función auxiliar ya corregida.
+            poblarMapaSimple(mapaClientes, clientes);
+            poblarMapaSimple(mapaCategorias, categorias); // <--- ESTA LÍNEA FALTABA
+
+            // 🎯 Llenar selects (con los mapas ya poblados correctamente)
+            poblarConfiguracionBancos(bancos);
+            poblarSelectClientes(clientes);
+            poblarSelectCategorias(categorias);
+
+            // 🧩 Guardar plantillas y poblar selector
+            plantillasDisponibles = plantillas || [];
+            poblarSelectorDePlantillas(plantillas);
+
+            // 🔃 Procesar transacciones
+            datosInicialesRecibidos(transacciones);
+        })
+        .catch(error => {
+            cargandoDiv.textContent = "❌ Error al cargar. Intenta recargar la página.";
+            cargandoDiv.style.color = 'red';
+            errorServidor(error);
+        })
+        .finally(() => {
+            // Ocultar el 'div' de carga al final.
+            setTimeout(() => {
+                cargandoDiv.style.display = 'none';
+                cargandoDiv.style.color = ''; // Restaurar color por si hubo error
+            }, 1500); // Ocultar después de 1.5 segundos
+        });
+}
+
+
+    function refrescarDatosTransacciones() {
+        const cargandoDiv = document.getElementById("cargando");
+        cargandoDiv.textContent = "Actualizando datos...";
+        cargandoDiv.style.display = "block";
+        document.getElementById("card-container").innerHTML = "";
+        google.script.run.withSuccessHandler(datosInicialesRecibidos).withFailureHandler(errorServidor).obtenerTransacciones();
+    }
+    
+    function datosInicialesRecibidos(data) {
+        if (data.error) return errorServidor({ message: data.error });
+        todasLasFilas = data.filas || [];
+        encabezados = data.encabezados || [];
+        indices = {};
+        // Normalizar los encabezados a minúsculas para que el acceso sea consistente.
+        encabezados.forEach((enc, index) => {
+            if (enc) {
+                indices[enc.toLowerCase().trim()] = index;
+            }
+        });
+        document.getElementById("cargando").style.display = "none";
+        aplicarFiltros();
+    }
+    
+/**
+ * Usa la lista de bancos para poblar los diferentes menús desplegables en la UI.
+ * No gestiona el mapa de datos, solo lo lee.
+ */
+function poblarConfiguracionBancos(bancos) {
+    // Se eliminó mapaBancos.clear() y el bucle forEach.
+    // La función ahora solo se encarga de poblar los elementos de la UI.
+    poblarSelectorCajaPrincipal(bancos);
+    poblarSelectBancosModal(bancos);
+}
+
+    function poblarSelectorCajaPrincipal(bancos) {
+        const select = document.getElementById('caja-selector');
+        if (!select) return;
+        select.innerHTML = '<option value="todos">-- Todas las Cajas --</option>';
+        (bancos || []).forEach(banco => {
+            const option = document.createElement('option');
+            option.value = banco.bankAccountId;
+            option.textContent = banco.name;
+            select.appendChild(option);
+        });
+    }
+
+    function poblarSelectBancosModal(bancos) {
+        const select = document.getElementById('add-bankAccountId');
+        if (!select) return;
+        select.innerHTML = '<option value="">-- Seleccione Banco --</option>';
+        (bancos || []).forEach(banco => {
+            const option = document.createElement('option');
+            option.value = banco.bankAccountId;
+            option.textContent = banco.name;
+            select.appendChild(option);
+        });
+    }
+
+    function poblarSelect(selectores, data, mapa) {
+        mapa.clear();
+        data.forEach(item => { if (item && item.id !== undefined && item.nombre !== undefined) mapa.set(String(item.id), item.nombre); });
+        document.querySelectorAll(selectores).forEach(selectElement => {
+            if (!selectElement) return;
+            const valorActual = selectElement.value;
+            selectElement.innerHTML = `<option value="">-- Selecciona ${selectElement.id.includes('cliente') ? 'Cliente' : 'Categoría'} --</option>`;
+            data.forEach(item => {
+                if (item && item.id !== undefined && item.nombre !== undefined) {
+                    const option = document.createElement("option");
+                    option.value = item.id;
+                    option.textContent = item.nombre;
+                    selectElement.appendChild(option);
+                }
+            });
+            selectElement.value = valorActual;
+        });
+    }
+
+    function poblarSelectClientes(clientes) { poblarSelect("#modal-cliente-select, #add-client-select", clientes, mapaClientes); }
+    function poblarSelectCategorias(categorias) { poblarSelect("#modal-categoria-select, #add-category-select", categorias, mapaCategorias); }
+    
+    function ejecutarProcesoActualizacion() { const btn = document.getElementById("btn-procesar"); btn.textContent = "Actualizando..."; btn.disabled = true; google.script.run.withSuccessHandler(function(respuesta) { mostrarMensajeUI(respuesta, 'success', 5000); btn.textContent = "Actualizar depósitos"; btn.disabled = false; refrescarDatosTransacciones(); }).withFailureHandler(function(error) { errorServidor(error); btn.textContent = "Actualizar depósitos"; btn.disabled = false; }).ejecutarActualizacionDepositos(); }
+    
+    function abrirModalAgregar() { 
+        $('#add-transaction-form').trigger('reset'); 
+        camposAnulados = {}; 
+        $('#add-transaction-form').find('input, select, textarea').removeClass('asistente-sugerencia'); 
+        $('#add-quantity').removeClass('borde-ingreso borde-egreso');
+        $('.tipo-btn').removeClass('active'); 
+        $('#resumen-inteligente').removeClass('ingreso egreso').text(''); 
+        const cajaActiva = document.getElementById('caja-selector').value; 
+        if (cajaActiva && cajaActiva !== 'todos') { 
+            $('#add-bankAccountId').val(cajaActiva); 
+        } 
+
+        const plantillaSel = $('#plantilla-select').val();
+    const plantillaObj = plantillasDisponibles.find(p => p.NombreDeLaPlantilla === plantillaSel);
+    if (plantillaObj && plantillaObj.TipoOperacion === 'TRANSFERENCIA' && (!cajaActiva || cajaActiva === 'todos')) {
+        mostrarMensajeUI("Selecciona primero una Caja Activa antes de registrar una transferencia.", 'error');
+        return;
+    }
+        $('#add-bankAccountId, #add-client-select, #add-category-select').trigger('change'); 
+        document.getElementById('add-modal').style.display = 'flex'; 
+        const now = new Date(); 
+        const year = now.getFullYear(); 
+        const month = (now.getMonth() + 1).toString().padStart(2, '0'); 
+        const day = now.getDate().toString().padStart(2, '0'); 
+        document.getElementById('add-fecha').value = `${year}-${month}-${day}`; 
+    }
+    
+    function abrirModalEdicion(idTransaccion) { 
+        document.getElementById("modal-transaccion-id").textContent = idTransaccion; 
+        const filaActual = todasLasFilas.find(f => String(f[indices['id']]) === String(idTransaccion)); 
+        if (filaActual) { 
+            const clienteIdActual = filaActual[indices['clientid']]; 
+            const categoriaIdActual = filaActual[indices['categoryid']]; 
+            $('#modal-cliente-select').val(clienteIdActual ? String(clienteIdActual) : '').trigger('change'); 
+            $('#modal-categoria-select').val(categoriaIdActual ? String(categoriaIdActual) : '').trigger('change'); 
+        } 
+        document.getElementById("edit-modal").style.display = "flex"; 
+    }
+    
+  /**
+ * Gestiona el envío del formulario de nueva transacción.
+ * Previene el envío, recoge datos, los valida, y los envía al backend.
+ */
+function guardarNuevaTransaccion(event) {
+    event.preventDefault();
+
+    // --- 1. CONFIGURACIÓN INICIAL Y ESTADO DE LA UI ---
+    const btnGuardar = document.getElementById("btn-guardar-nuevo");
+    btnGuardar.textContent = "Guardando...";
+    btnGuardar.disabled = true;
+
+        // --- NUEVA VALIDACIÓN OBLIGATORIA PARA CLIENTE ---
+    const clienteId = $('#add-client-select').val();
+    if (!clienteId) {
+        // Usamos la función de mensajes de tu aplicación real.
+        mostrarMensajeUI('Por favor, selecciona un cliente. Este campo es obligatorio.', 'error');
+        
+        // Restauramos el botón antes de salir.
+        btnGuardar.textContent = "Guardar Transacción";
+        btnGuardar.disabled = false;
+        return; // Detiene el guardado.
+    }
+
+    const restaurarBoton = () => {
+        btnGuardar.textContent = "Guardar Transacción";
+        btnGuardar.disabled = false;
+    };
+
+    // --- 2. RECOLECCIÓN Y LÓGICA DE DATOS ---
+    const nombrePlantilla = $('#plantilla-select').val();
+    const plantillaSeleccionada = plantillasDisponibles.find(p => p.NombreDeLaPlantilla === nombrePlantilla) || {};
+    // El tipo de operación puede ser PRESTAMO, TRANSFERENCIA o SIMPLE
+    const tipoOperacion = plantillaSeleccionada.TipoOperacion || 'SIMPLE';
+
+    const datosFormulario = {
+        tipo: plantillaSeleccionada['Tipo (in/out)'] || $('#add-tipo').val(),
+        fecha: $('#add-fecha').val(),
+        monto: $('#add-quantity').val(),
+        cuentaId: $('#add-bankAccountId').val(),
+        cuentaNombre: $('#add-bankAccountId option:selected').text(),
+        observaciones: $('#add-observations').val(),
+        clienteId: $('#add-client-select').val(),
+        clienteNombre: $('#add-client-select option:selected').text(),
+        categoriaId: $('#add-category-select').val(),
+        anotacion: $('#add-anotacion').val(),
+        cuentaDestinoId: $('#add-cuenta-destino-select').val(),
+        cuentaDestinoNombre: $('#add-cuenta-destino-select option:selected').text(),
+        numCuotas: $('#add-prestamo-cuotas').val(),
+        fechaPrimerPago: $('#add-prestamo-fecha-inicio').val(),
+        cuotasAbonar: $('#campo-abono-prestamo').is(':visible') ? ($('#abono-cuota-select').val() || []) : []
+    };
+
+    // --- 3. VALIDACIÓN CENTRALIZADA ---
+    if (!datosFormulario.tipo) {
+        mostrarMensajeUI('Debes seleccionar si es Ingreso o Egreso.', 'error');
+        restaurarBoton();
+        return;
+    }
+    if (!datosFormulario.fecha || !datosFormulario.monto || !datosFormulario.cuentaId || !datosFormulario.observaciones) {
+        mostrarMensajeUI('Por favor, completa todos los campos requeridos (*).', 'error');
+        restaurarBoton();
+        return;
+    }
+    if (tipoOperacion === 'TRANSFERENCIA') {
+        if (!datosFormulario.cuentaDestinoId) {
+            mostrarMensajeUI('Selecciona la cuenta de destino para la transferencia.', 'error');
+            restaurarBoton();
+            return;
+        }
+        if (datosFormulario.cuentaId === datosFormulario.cuentaDestinoId) {
+            mostrarMensajeUI('La cuenta de destino no puede ser la misma que la de origen.', 'error');
+            restaurarBoton();
+            return;
+        }
+    }
+    // [CORRECCIÓN 1] - Validar si el campo de cuotas está visible
+    if ($('#campo-abono-prestamo').is(':visible') && datosFormulario.cuotasAbonar.length === 0) {
+        mostrarMensajeUI('Debes seleccionar al menos una cuota para abonar.', 'error');
+        restaurarBoton();
+        return;
+    }
+
+    // --- 4. CONSTRUCCIÓN DEL OBJETO FINAL PARA EL BACKEND ---
+    const datosParaEnviar = {
+        tipoOperacion: tipoOperacion,
+        tipo: datosFormulario.tipo,
+        fecha: datosFormulario.fecha,
+        monto: datosFormulario.monto,
+        cuentaId: datosFormulario.cuentaId,
+        observaciones: datosFormulario.observaciones,
+        clienteId: datosFormulario.clienteId || null,
+        categoriaId: datosFormulario.categoriaId || null,
+        anotacion: datosFormulario.anotacion || null
+    };
+
+    // Añadir campos específicos según la operación
+    if (tipoOperacion === 'TRANSFERENCIA') {
+        datosParaEnviar.cuentaOrigenNombre = datosFormulario.cuentaNombre;
+        datosParaEnviar.cuentaDestinoId = datosFormulario.cuentaDestinoId;
+        datosParaEnviar.cuentaDestinoNombre = datosFormulario.cuentaDestinoNombre;
+    } else if (tipoOperacion === 'PRESTAMO') {
+        datosParaEnviar.montoTotal = datosFormulario.monto;
+        datosParaEnviar.deudorId = datosFormulario.clienteId;
+        datosParaEnviar.deudorNombre = datosFormulario.clienteNombre;
+        datosParaEnviar.numCuotas = datosFormulario.numCuotas;
+        datosParaEnviar.fechaPrimerPago = datosFormulario.fechaPrimerPago;
+    }
+    
+    // [CORRECCIÓN 2] - Añadir cuotas si existen, sin importar el tipoOperacion
+    if (datosFormulario.cuotasAbonar.length > 0) {
+        datosParaEnviar.cuotasAbonar = datosFormulario.cuotasAbonar;
+    }
+    
+    // --- 5. LLAMADA ASÍNCRONA AL BACKEND ---
+    google.script.run
+        .withSuccessHandler(function(mensajeExito) {
+            mostrarMensajeUI(mensajeExito, 'success');
+            cerrarModal('add-modal');
+            refrescarDatosTransacciones();
+            restaurarBoton();
+        })
+        .withFailureHandler(function(error) {
+            errorServidor(error);
+            restaurarBoton();
+        })
+        .procesarNuevaTransaccion(datosParaEnviar);
+}
+
+
+function aprobarConPin() {
+    const pinIngresado = document.getElementById('pin-input').value;
+    if (!pinIngresado || !idTransaccionParaAprobar) return;
+
+    // Genera la anotación requerida por el backend
+    const anotation = generarAnotationPinId(pinIngresado, idTransaccionParaAprobar);
+
+    // No hay "if (pinIngresado === ...)" aquí. Se envía directamente.
+    // El servidor se encargará de rechazarlo si es incorrecto.
+    google.script.run
+        .withSuccessHandler(function(respuesta) {
+            // El backend responderá con exito:false si el PIN es incorrecto
+            if (respuesta.exito) {
+                mostrarMensajeUI(respuesta.mensaje, 'success');
+                cerrarModal('pin-modal');
+                refrescarDatosTransacciones();
+            } else {
+                mostrarMensajeUI(respuesta.mensaje, 'error');
+                document.getElementById('pin-error').style.display = 'block';
+                document.getElementById('pin-input').value = '';
+            }
+        })
+        .withFailureHandler(errorServidor)
+        .aprobarTransaccionConPin(idTransaccionParaAprobar, pinIngresado, anotation);
+    
+    idTransaccionParaAprobar = null; // Limpiar después de intentar
+}
+
+
+    function generarAnotationPinId(pin, id) {
+    return `${pin}${id}`;
+}
+// Ejemplo de uso:
+const anotation = generarAnotationPinId("1511", idTransaccion);
+
+    
+    function guardarCambiosClienteCategoria() { 
+        const btnGuardar = document.getElementById("btn-guardar-cambios-modal"); 
+        if (!idTransaccionActualParaEditar || btnGuardar.disabled) return; 
+        btnGuardar.textContent = "Guardando..."; 
+        btnGuardar.disabled = true; 
+        const clienteSeleccionadoId = $('#modal-cliente-select').val(); 
+        const categoriaSeleccionadaId = $('#modal-categoria-select').val(); 
+        google.script.run
+            .withSuccessHandler(function(respuesta){
+                mostrarMensajeUI(respuesta, 'success');
+                btnGuardar.textContent = "Guardar Cambios";
+                btnGuardar.disabled = false;
+                cerrarModal('edit-modal');
+                refrescarDatosTransacciones();
+            })
+            .withFailureHandler(function(error){
+                errorServidor(error);
+                btnGuardar.textContent = "Guardar Cambios";
+                btnGuardar.disabled = false;
+            })
+            .actualizarClienteCategoria(idTransaccionActualParaEditar, clienteSeleccionadoId, categoriaSeleccionadaId);
+    }
+
+function imprimirComprobante(transaccionId) {
+
+    // ==================================================================
+    // --- INICIO: Lógica dinámica añadida para el encabezado y resumen ---
+    // ==================================================================
+
+    // 1. Encontrar la fila de datos completa para esta transacción
+    const fila = todasLasFilas.find(f => String(f[indices['id']]) === String(transaccionId));
+    if (!fila) {
+        console.error("No se encontró la transacción para imprimir:", transaccionId);
+        return;
+    }
+
+    // 2. Extraer los datos necesarios de la fila
+    const tipo = fila[indices['type']];
+    const clienteId = fila[indices['clientid']];
+    const categoriaId = fila[indices['categoryid']];
+    const cantidad = parseFloat(fila[indices['quantity']]) || 0;
+
+    const nombreCliente = mapaClientes.get(String(clienteId)) || '[Cliente no especificado]';
+    const nombreCategoria = mapaCategorias.get(String(categoriaId)) || '[Categoría no especificada]';
+    const cantidadFormateada = new Intl.NumberFormat('es-NI', { style: 'currency', currency: 'NIO' }).format(cantidad);
+
+    // 3. Preparar los textos dinámicos
+    let tituloDocumento = 'Comprobante de Transacción';
+    let resumenNarrativo = '';
+
+    if (tipo === 'in') {
+        tituloDocumento = 'Recibo de Caja';
+        resumenNarrativo = `Recibí de <strong>${nombreCliente}</strong> la cantidad de <strong>${cantidadFormateada}</strong> en concepto de <strong>${nombreCategoria}</strong>.`;
+    } else if (tipo === 'out') {
+        tituloDocumento = 'Comprobante de Egreso';
+        resumenNarrativo = `Entregué a <strong>${nombreCliente}</strong> la cantidad de <strong>${cantidadFormateada}</strong> en concepto de <strong>${nombreCategoria}</strong>.`;
+    }
+
+    // 4. Inyectar los textos en los contenedores "fantasma"
+    document.getElementById('print-dynamic-header').innerHTML = `<h1>${tituloDocumento}</h1>`;
+    document.getElementById('print-dynamic-summary').innerHTML = `<p>${resumenNarrativo}</p>`;
+
+    // ==================================================================
+    // --- FIN: Lógica dinámica añadida ---
+    // --- INICIO: Tu código original (sin cambios) ---
+    // ==================================================================
+
+    const cardToPrint = document.querySelector(`.card[data-id="${transaccionId}"]`);
+    if (!cardToPrint) return;
+
+    // Tu código para actualizar la fecha ya está aquí, perfecto.
+    const printDateEl = document.getElementById('print-date');
+    if(printDateEl) {
+        printDateEl.textContent = new Date().toLocaleString('es-NI', { dateStyle: 'short', timeStyle: 'short' });
+    }
+
+    document.body.classList.add('printing-single-card');
+    cardToPrint.classList.add('printable-card');
+
+    const imageContainer = cardToPrint.querySelector('.card-image-container');
+    
+    const triggerPrint = () => {
+        setTimeout(() => window.print(), 100);
+    };
+
+    if (imageContainer && imageContainer.dataset.src) {
+        const placeholder = imageContainer.querySelector('.image-placeholder');
+        if (placeholder) placeholder.style.display = 'none';
+
+        let img = imageContainer.querySelector('.transaction-image');
+        if (!img) {
+            img = document.createElement('img');
+            img.className = 'transaction-image';
+            img.alt = 'Comprobante adjunto';
+            imageContainer.appendChild(img);
+        }
+
+        if (img.src.startsWith('data:image')) {
+            triggerPrint();
+            return;
+        }
+
+        let loadingMessage = imageContainer.querySelector('.loading-msg');
+        if (!loadingMessage) {
+            loadingMessage = document.createElement('p');
+            loadingMessage.textContent = 'Cargando imagen del comprobante...';
+            loadingMessage.className = 'loading-msg no-print';
+            imageContainer.appendChild(loadingMessage);
+        }
+        loadingMessage.style.display = 'block';
+        
+        google.script.run
+            .withSuccessHandler(function(imageData) {
+                loadingMessage.style.display = 'none';
+                if (imageData && imageData.base64Data) {
+                    img.src = `data:${imageData.contentType};base64,${imageData.base64Data}`;
+                    img.onload = triggerPrint;
+                    img.onerror = () => { triggerPrint(); };
+                } else {
+                    imageContainer.style.display = 'none';
+                    triggerPrint();
+                }
+            })
+            .withFailureHandler(function(error) {
+                loadingMessage.style.display = 'none';
+                imageContainer.style.display = 'none';
+                triggerPrint();
+            })
+            .getImageAsBase64(imageContainer.dataset.src);
+    } else {
+        triggerPrint();
+    }
+}
+
+    /**
+ * Llena el dropdown de plantillas con los datos obtenidos del servidor.
+ */
+function poblarSelectorDePlantillas(plantillas) {
+  const select = document.getElementById('plantilla-select');
+  select.innerHTML = '<option value="">-- Ninguna (Registro Manual) --</option>'; 
+  plantillas.forEach(p => {
+    const option = document.createElement('option');
+    option.value = p.NombreDeLaPlantilla;
+    option.textContent = p.NombreDeLaPlantilla;
+    select.appendChild(option);
+  });
+
+  // Listener sólo aquí
+  select.onchange = null;
+  select.addEventListener('change', function() {
+  const plantilla = plantillasDisponibles.find(
+    p => (p.NombreDeLaPlantilla || '').trim() === (this.value || '').trim()
+  );
+
+  // Oculta campos especiales por defecto
+  document.getElementById('campo-cuenta-destino').style.display = 'none';
+  document.getElementById('campos-prestamo').style.display = 'none';
+
+  if (!plantilla) {
+    $('#add-category-select').val('').trigger('change');
+    seleccionarTipo('');
+    $('.tipo-btn').prop('disabled', false);
+    $('#add-bankAccountId').prop('disabled', false);
+    $('#add-observations').val('');
+    $('#add-client-select').val('').trigger('change');
+    return;
+  }
+
+  // ======= AUTORELLENO DE CAMPOS POR PLANTILLA =======
+// 1. Categoría
+if (plantilla.CategoriaPredeterminada) {
+  let idCategoria = '';
+  mapaCategorias.forEach((nombre, id) => {
+    if ((nombre || '').trim().toLowerCase() === (plantilla.CategoriaPredeterminada || '').trim().toLowerCase()) {
+      idCategoria = id;
+    }
+  });
+  if (idCategoria) {
+    $('#add-category-select').val(idCategoria).trigger('change');
+  } else {
+    $('#add-category-select').val('').trigger('change'); // Limpia si no encuentra
+  }
+}
+
+// 2. Cliente
+if (plantilla.ClientePredeterminado) {
+  let idCliente = '';
+  mapaClientes.forEach((nombre, id) => {
+    if ((nombre || '').trim().toLowerCase() === (plantilla.ClientePredeterminado || '').trim().toLowerCase()) {
+      idCliente = id;
+    }
+  });
+  if (idCliente) {
+    $('#add-client-select').val(idCliente).trigger('change');
+  } else {
+    $('#add-client-select').val('').trigger('change'); // Limpia si no encuentra
+  }
+}
+
+// 3. Observaciones
+if (plantilla.ObservacionesPredeterminadas) {
+  $('#add-observations').val(plantilla.ObservacionesPredeterminadas);
+}
+
+// 4. Tipo
+if (plantilla['Tipo (in/out)']) {
+  seleccionarTipo(plantilla['Tipo (in/out)']);
+}
+
+// 5. Cuenta (Caja) - por si decides usar CuentaPredeterminada en el futuro
+if (plantilla.CuentaPredeterminada) {
+  let idCuenta = '';
+  mapaBancos.forEach((banco, id) => {
+    if ((banco.name || '').trim().toLowerCase() === (plantilla.CuentaPredeterminada || '').trim().toLowerCase()) {
+      idCuenta = id;
+    }
+  });
+  if (idCuenta) {
+    $('#add-bankAccountId').val(idCuenta).trigger('change');
+  }
+}
+  // ========== LÓGICA ESPECIAL PARA TRANSFERENCIAS ==========
+  if ((plantilla.TipoOperacion || '').toUpperCase().trim() === 'TRANSFERENCIA') {
+    seleccionarTipo('out');
+    $('.tipo-btn').prop('disabled', true);
+    document.getElementById('campo-cuenta-destino').style.display = 'block';
+
+    const cajaActiva = document.getElementById('caja-selector').value;
+    if (!cajaActiva || cajaActiva === 'todos') {
+      mostrarMensajeUI("Selecciona primero una Caja Activa antes de registrar una transferencia.", 'error');
+      $('#add-bankAccountId').val('').trigger('change');
+      $('#add-bankAccountId').prop('disabled', true);
+      return;
+    }
+    $('#add-bankAccountId').val(cajaActiva).trigger('change');
+    $('#add-bankAccountId').prop('disabled', true);
+
+    // Deshabilita opción igual a origen en el destino
+    const selectDestino = document.getElementById('add-cuenta-destino-select');
+    Array.from(selectDestino.options).forEach(opt => {
+      if (opt.value === cajaActiva) {
+        opt.disabled = true;
+        opt.style.display = 'none';
+      } else {
+        opt.disabled = false;
+        opt.style.display = '';
+      }
+    });
+    selectDestino.value = "";
+  } else {
+    $('.tipo-btn').prop('disabled', false);
+    $('#add-bankAccountId').prop('disabled', false);
+  }
+
+  switch ((plantilla.TipoOperacion || '').toUpperCase().trim()) {
+    case 'TRANSFERENCIA':
+      document.getElementById('campo-cuenta-destino').style.display = 'block';
+      break;
+    case 'PRESTAMO':
+      document.getElementById('campos-prestamo').style.display = 'grid';
+      break;
+  }
+});
+
+}
+
+
+
+
+
+
+
+
+// Calcula y actualiza los valores del dashboard según las transacciones filtradas
+function updateDashboard(filteredTransactions) {
+    let totalIn = 0, totalOut = 0;
+    filteredTransactions.forEach(tx => {
+        // Ajusta los índices/keys según tu estructura real
+        const tipo = Array.isArray(tx) ? tx[indices['type']] : tx.type;
+        const monto = parseFloat(Array.isArray(tx) ? tx[indices['quantity']] : tx.quantity) || 0;
+        if (tipo === "in") totalIn += monto;
+        if (tipo === "out") totalOut += monto;
+    });
+    // Formatea a moneda nica
+    const formato = v => v.toLocaleString('es-NI', {style: 'currency', currency: 'NIO'});
+    document.getElementById('monto-ingresos').textContent = formato(totalIn);
+    document.getElementById('monto-egresos').textContent = formato(totalOut);
+    document.getElementById('monto-balance').textContent = formato(totalIn - totalOut);
+}
+
+// Variable global para controlar el temporizador del "debounce"
+let abonoDebounceTimer;
+
+/**
+ * Verifica si se debe mostrar el campo de abono a préstamo.
+ * Usa una técnica de "debouncing" para evitar llamadas múltiples y condiciones de carrera.
+ */
+function verificarAbonoPrestamo() {
+    // Cancela cualquier búsqueda anterior que estuviera en espera.
+    clearTimeout(abonoDebounceTimer);
+
+    // Espera 150 milisegundos antes de ejecutar la búsqueda.
+    // Esto agrupa las llamadas rápidas y solo ejecuta la última.
+    abonoDebounceTimer = setTimeout(() => {
+        const plantillaSel = $('#plantilla-select').val() || '';
+        const categoriaSel = $('#add-category-select option:selected').text().trim() || '';
+        const clienteId = $('#add-client-select').val();
+
+        console.log("Ejecutando búsqueda DEBOUNCED para el clienteId:", clienteId);
+
+        // La condición es la misma, pero ahora solo se ejecuta si hay un clienteId válido.
+       if (plantillaSel === "Abono de Préstamo" && clienteId) {
+            google.script.run
+                .withSuccessHandler(mostrarCuotasPendientes)
+                .withFailureHandler(errorServidor) // Es bueno añadir el failure handler aquí también
+                .obtenerCuotasPendientes(clienteId);
+        } else {
+            // Si no hay clienteId, simplemente oculta el campo sin hacer una llamada al backend.
+            $('#campo-abono-prestamo').hide();
+            $('#abono-cuota-select').empty().trigger('change');
+            $('#info-cuotas-abono').text('');
+            // No se debe modificar el campo de cantidad aquí, 
+            // solo cuando se interactúa con las cuotas.
+        }
+    }, 150); // Un retardo de 150ms es suficiente para la mayoría de los casos.
+}
+
+// 2. Poblado de cuotas al recibir del backend
+// En tu archivo index.html
+
+// En tu archivo index.html
+
+/**
+ * Muestra las cuotas pendientes en el selector, usando una plantilla HTML personalizada
+ * para una presentación más clara y profesional.
+ */
+function mostrarCuotasPendientes(listaCuotas) {
+    const $select = $('#abono-cuota-select');
+
+    // Si el select ya tiene Select2 inicializado, lo destruimos para reconfigurarlo.
+    if ($select.data('select2')) {
+        $select.select2('destroy');
+    }
+    
+    // Limpiamos cualquier opción anterior.
+    $select.empty();
+
+    if (!Array.isArray(listaCuotas) || listaCuotas.length === 0) {
+        $('#info-cuotas-abono').text('Este cliente no tiene cuotas pendientes.');
+        $('#campo-abono-prestamo').show();
+        return;
+    }
+
+    // 1. Preparamos los datos en el formato que Select2 necesita.
+    const datosParaSelect2 = listaCuotas.map(q => {
+        return {
+            id: q.ID_Cuota,
+            text: `Cuota: ${Number(q.Monto).toLocaleString('es-NI', { style: 'currency', currency: 'NIO' })}`, // Texto para la selección
+            monto: q.Monto,
+            fechaFormateada: formatFecha(q.Fecha_Vencimiento)
+        };
+    });
+
+    // 2. Re-inicializamos Select2 con las nuevas opciones y plantillas.
+    $select.select2({
+        width: '100%',
+        dropdownParent: $('#campo-abono-prestamo'),
+        placeholder: "Selecciona una o más cuotas",
+        data: datosParaSelect2, // Usamos nuestro array de datos
+        templateResult: formatCuotaResult, // Función para formatear la lista
+        templateSelection: formatCuotaSelection // Función para formatear la selección
+    });
+
+    $('#campo-abono-prestamo').show();
+    $('#info-cuotas-abono').text('Selecciona una o más cuotas a abonar.');
+}
+
+/**
+ * Función que define el HTML para cada opción en la lista desplegable.
+ * @param {object} cuota - El objeto de datos para una opción.
+ * @returns {jQuery} - Un objeto jQuery con el HTML formateado.
+ */
+function formatCuotaResult(cuota) {
+    if (cuota.loading) {
+        return cuota.text;
+    }
+
+    const montoFormateado = Number(cuota.monto).toLocaleString('es-NI', { style: 'currency', currency: 'NIO' });
+
+    const $container = $(
+        '<div class="select2-result-cuota">' +
+            '<div class="select2-result-cuota__monto">' + montoFormateado + '</div>' +
+            '<div class="select2-result-cuota__fecha">Vence: ' + cuota.fechaFormateada + '</div>' +
+            '<div class="select2-result-cuota__id">ID: ' + cuota.id + '</div>' +
+        '</div>'
+    );
+
+    return $container;
+}
+
+// REEMPLAZA ESTA FUNCIÓN EN TU index.html
+
+/**
+ * Función que define el HTML para CADA "tag" o "píldora" individual
+ * que aparece en la caja de selección.
+ * @param {object} cuota - El objeto de datos de UNA opción seleccionada.
+ * @returns {string} - El texto a mostrar para esa píldora.
+ */
+function formatCuotaSelection(cuota) {
+    // Si el objeto no tiene un ID, es el placeholder inicial, lo devolvemos tal cual.
+    if (!cuota.id) {
+        return cuota.text;
+    }
+
+    // Para cada cuota seleccionada, creamos una etiqueta corta y clara.
+    const montoFormateado = Number(cuota.monto).toLocaleString('es-NI', { style: 'currency', currency: 'NIO' });
+    
+    // Devolvemos solo el monto de la cuota. La librería lo mostrará como una etiqueta.
+    return montoFormateado; 
+}
+
+// 3. Suma automática de los montos seleccionados
+// En tu archivo index.html, dentro del bloque $(document).ready(...)
+// Esta es la única versión que necesitas.
+
+$('#abono-cuota-select').on('change', function () {
+    let total = 0;
+    
+    // Usamos el método oficial de Select2 para obtener los datos completos de los ítems seleccionados.
+    const seleccionadas = $(this).select2('data');
+
+    // Verificamos que 'seleccionadas' sea un array
+    if (Array.isArray(seleccionadas)) {
+        // Iteramos sobre los objetos de datos, no sobre las opciones del HTML.
+        seleccionadas.forEach(function (item) {
+            // Sumamos la propiedad 'monto' de cada objeto.
+            total += parseFloat(item.monto) || 0;
+        });
+    }
+
+    // El resto de la lógica para actualizar la UI es la misma y ya es correcta.
+    if (total > 0) {
+        $('#add-quantity').val(total.toFixed(2)).prop('readonly', true);
+        $('#info-cuotas-abono').text(`Total a abonar: C$${total.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    } else {
+        $('#add-quantity').val('').prop('readonly', false);
+        $('#info-cuotas-abono').text('Selecciona una o más cuotas a abonar.');
+    }
+    
+    // Disparamos un último change en el campo de cantidad para que cualquier otra lógica reaccione
+    $('#add-quantity').trigger('change');
+});
+
+
+// 4. Hook a los cambios de plantilla, cliente, categoría
+$('#plantilla-select, #add-category-select, #add-client-select').on('change', verificarAbonoPrestamo);
+
+// 5. Función auxiliar para mostrar fecha
+function formatFecha(fecha) {
+    // Intenta formatear fechas tipo Date de Google Apps Script o ISO string
+    const d = new Date(fecha);
+    if (isNaN(d)) return fecha;
+    return d.toLocaleDateString('es-NI', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function actualizarSumaCuotasSeleccionadas() {
+    let suma = 0;
+    $('.cuota-checkbox:checked').each(function() {
+        suma += parseFloat($(this).data('monto')) || 0;
+    });
+    if (suma > 0) {
+        $('#add-quantity').val(suma.toFixed(2));
+    } else {
+        $('#add-quantity').val('');
+    }
+}
+
+
+// --- BLOQUE ÚNICO DOMContentLoaded ---
+document.addEventListener("DOMContentLoaded", function() {
+    // --- 1. Carga inicial y seteo de fechas ---
+    cargarDatosIniciales();
+    const hoy = new Date();
+    const anio = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const fechaDeHoyFormateada = `${anio}-${mes}-${dia}`;
+    document.getElementById('fecha-inicio').value = fechaDeHoyFormateada;
+    document.getElementById('fecha-fin').value = fechaDeHoyFormateada;
+
+    // --- 2. Listeners generales ---
+    document.querySelectorAll(".filtros input, .filtros select").forEach(el => el.addEventListener("change", aplicarFiltros));
+    document.getElementById("descripcion").addEventListener("input", aplicarFiltros);
+    document.getElementById("btn-procesar").addEventListener("click", ejecutarProcesoActualizacion);
+    document.getElementById("btn-abrir-modal-agregar").addEventListener("click", abrirModalAgregar);
+    document.getElementById("add-transaction-form").addEventListener("submit", guardarNuevaTransaccion);
+    document.getElementById("btn-guardar-cambios-modal").addEventListener("click", guardarCambiosClienteCategoria);
+    document.getElementById("btn-aprobar-pin").addEventListener("click", aprobarConPin); 
+    document.getElementById("card-container").addEventListener("click", handleCardClick);
+    document.addEventListener('click', closeAllMenus);
+
+    document.querySelectorAll(".tab-link").forEach(tab => {
+        tab.addEventListener("click", function() {
+            document.querySelectorAll(".tab-link").forEach(t => t.classList.remove("active"));
+            this.classList.add("active");
+            filtroTabActual = this.dataset.tabFilter;
+            aplicarFiltros();
+        });
+    });
+
+    document.getElementById("btn-imprimir-vista").addEventListener("click", () => window.print());
+
+    // Listeners para cerrar modales
+    document.querySelectorAll('.modal-close-button, .btn-neutral[data-modal-id]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            cerrarModal(this.dataset.modalId);
+        });
+    });
+
+    // Listeners del Asistente y selección visual
+    $('#add-observations').on('input', function() {
+        clearTimeout(asistenteDebounceTimer);
+        asistenteDebounceTimer = setTimeout(() => analizarDescripcionInteligentemente($(this).val()), 400);
+    });
+    $('#add-transaction-form').on('input change', '#add-quantity, #add-bankAccountId', actualizarResumenInteligente);
+
+    $('.tipo-btn').on('click', function() {
+        seleccionarTipo($(this).data('tipo'));
+        camposAnulados['tipo'] = true;
+        $(this).removeClass('asistente-sugerencia');
+    });
+
+    $('#add-transaction-form').on('change', 'select, textarea, input[type="date"]', function() {
+        const fieldId = $(this).attr('id');
+        const key = fieldId.replace('add-', '').replace('-select', '');
+        camposAnulados[key] = true;
+        $(this).removeClass('asistente-sugerencia');
+    });
+
+    $('#add-quantity').on('input', function() {
+        camposAnulados['quantity'] = true;
+        $(this).removeClass('asistente-sugerencia');
+    });
+
+    window.addEventListener('afterprint', () => {
+        document.body.classList.remove('printing-single-card');
+        const printableCard = document.querySelector('.printable-card');
+        if (printableCard) {
+            printableCard.classList.remove('printable-card');
+        }
+    });
+
+    try {
+        $('#caja-selector').select2({ width: 'style' }).on('change', aplicarFiltros);
+        $('#modal-cliente-select, #modal-categoria-select').select2({ dropdownParent: $('#edit-modal .modal-content'), width: '100%' });
+        $('#add-client-select, #add-category-select, #add-bankAccountId').select2({ dropdownParent: $('#add-modal .modal-content'), width: '100%' });
+    } catch(e) { console.warn("Error inicializando Select2:", e); }
+
+    // --- 3. Listener para el selector de plantillas y lógica de cuenta destino ---
+    function intentarAsignarListener() {
+        const selectorPlantilla = document.getElementById('plantilla-select');
+        if (selectorPlantilla && Array.isArray(plantillasDisponibles) && plantillasDisponibles.length > 0) {
+            selectorPlantilla.onchange = null; // Evita duplicados
+
+            selectorPlantilla.addEventListener('change', function() {
+                console.log('🟢 Listener de cambio de plantilla ACTIVADO');
+                const plantilla = plantillasDisponibles.find(
+                    p => (p.NombreDeLaPlantilla || '').trim() === (this.value || '').trim()
+                );
+                console.log('Plantilla seleccionada:', plantilla);
+
+                // Oculta campos especiales por defecto
+                document.getElementById('campo-cuenta-destino').style.display = 'none';
+                document.getElementById('campos-prestamo').style.display = 'none';
+
+                if (!plantilla) {
+                    $('#add-category-select').val('').trigger('change');
+                    seleccionarTipo('');
+                    $('.tipo-btn').prop('disabled', false);
+                    $('#add-bankAccountId').prop('disabled', false);
+                    $('#add-observations').val('');
+                    $('#add-client-select').val('').trigger('change');
+                    poblarSelectCuentasDestino([], '');
+                    return;
+                }
+
+                // --- AUTORELLENO CAMPOS PLANTILLA (Cliente, Categoría, Observaciones, Cuenta, Tipo) ---
+                // 1. Categoría
+                if (plantilla.CategoriaPredeterminada) {
+                    let idCategoria = '';
+                    mapaCategorias.forEach((nombre, id) => {
+                        if ((nombre || '').trim().toLowerCase() === (plantilla.CategoriaPredeterminada || '').trim().toLowerCase()) {
+                            idCategoria = id;
+                        }
+                    });
+                    $('#add-category-select').val(idCategoria || '').trigger('change');
+                }
+
+                // 2. Cliente
+                if (plantilla.ClientePredeterminado) {
+                    let idCliente = '';
+                    mapaClientes.forEach((nombre, id) => {
+                        if ((nombre || '').trim().toLowerCase() === (plantilla.ClientePredeterminado || '').trim().toLowerCase()) {
+                            idCliente = id;
+                        }
+                    });
+                    $('#add-client-select').val(idCliente || '').trigger('change');
+                }
+
+                // 3. Observaciones
+                if (plantilla.ObservacionesPredeterminadas) {
+                    $('#add-observations').val(plantilla.ObservacionesPredeterminadas);
+                }
+
+                // 4. Tipo
+                if (plantilla['Tipo (in/out)']) {
+                    seleccionarTipo(plantilla['Tipo (in/out)']);
+                }
+
+                // 5. Cuenta (Caja) - futuro uso de CuentaPredeterminada
+                if (plantilla.CuentaPredeterminada) {
+                    let idCuenta = '';
+                    mapaBancos.forEach((banco, id) => {
+                        if ((banco.name || '').trim().toLowerCase() === (plantilla.CuentaPredeterminada || '').trim().toLowerCase()) {
+                            idCuenta = id;
+                        }
+                    });
+                    if (idCuenta) {
+                        $('#add-bankAccountId').val(idCuenta).trigger('change');
+                    }
+                }
+
+                // ========== LÓGICA PARA TRANSFERENCIAS ==========
+                if ((plantilla.TipoOperacion || '').toUpperCase().trim() === 'TRANSFERENCIA') {
+  seleccionarTipo('out');
+  $('.tipo-btn').prop('disabled', true);
+  document.getElementById('campo-cuenta-destino').style.display = 'block';
+
+  const cajaActiva = document.getElementById('caja-selector').value;
+
+  // Obtiene todos los bancos del mapa
+  const bancosArray = Array.from(mapaBancos, ([id, obj]) => ({
+    bankAccountId: id,
+    name: obj.name
+  }));
+
+  // LOGS DE DEPURACIÓN
+  console.log('Mapa de bancos:', Array.from(mapaBancos));
+  console.log('Caja activa:', cajaActiva);
+  console.log('Bancos para poblar:', bancosArray);
+
+  // Pobla el select de cuentas destino
+  poblarSelectCuentasDestino(bancosArray, cajaActiva);
+
+  // Re-inicializa select2 después de poblar
+  if ($('#add-cuenta-destino-select').data('select2')) {
+    $('#add-cuenta-destino-select').select2('destroy');
+  }
+  $('#add-cuenta-destino-select').select2({ dropdownParent: $('#add-modal .modal-content'), width: '100%' });
+
+  document.getElementById('add-cuenta-destino-select').value = "";
+}
+ else {
+                    $('.tipo-btn').prop('disabled', false);
+                    $('#add-bankAccountId').prop('disabled', false);
+                    poblarSelectCuentasDestino([], '');
+                }
+
+                // Mostrar otros campos especiales según plantilla
+                switch ((plantilla.TipoOperacion || '').toUpperCase().trim()) {
+                    case 'TRANSFERENCIA':
+                        document.getElementById('campo-cuenta-destino').style.display = 'block';
+                        break;
+                    case 'PRESTAMO':
+                        document.getElementById('campos-prestamo').style.display = 'grid';
+                        break;
+                }
+            });
+
+            console.log('Listener de plantilla asignado correctamente');
+        } else {
+            // Reintenta si aún no están listos
+            setTimeout(intentarAsignarListener, 250);
+        }
+    }
+    intentarAsignarListener();
+});
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
