@@ -3,7 +3,7 @@
 const ENDPOINT_ALEGRA = "https://api.alegra.com/api/v1/payments";
 
 // --- CORRECCIÓN 1: El token ya no incluye la palabra "Basic " ---
-const TOKEN_ALEGRA = "Y2FybG9zdWdlMzAwODg5QHlhaG9vLmNvbTphNTRlZWY4ODQxN2YyMTg4ZWE4MA=="; 
+const TOKEN_ALEGRA = PropertiesService.getScriptProperties().getProperty('API_ALEGRA');; 
 const MODO_TEST_API_ALEGRA = false; // Cambiar a false para modo producción
 
 // --- FUNCIÓN PRINCIPAL ---
@@ -51,10 +51,10 @@ function registrarPagosDesdeSheet(idEspecifico = null) {
     }
 
     // --- Reglas para el modo lote ---
-    if (!idEspecifico) {
-      if (fila[colRegistradoAlegra] && fila[colRegistradoAlegra].toString().toLowerCase() === "ok") continue;
-      if (fila[colEstadoInterno].toLowerCase() !== "aprobada") continue; // Solo procesa las aprobadas
-    }
+if (!idEspecifico) {
+  if (fila[colRegistradoAlegra] && fila[colRegistradoAlegra].toString().toLowerCase() === "ok") continue;
+  if (fila[colEstadoInterno].toLowerCase() !== "procesado= aprobada") continue; // Solo procesa las que tienen "procesado= aprobada"
+}
     
     // --- Lógica de validación ---
     const anotation = fila[colAnotation] || "";
