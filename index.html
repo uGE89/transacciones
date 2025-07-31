@@ -379,6 +379,27 @@
     margin-top: 2px;
 }
 
+/* Estilo para el nuevo botón "Registrar Alegra" */
+.secundario-morado {
+  background-color: #673AB7; /* Un tono de morado profesional */
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.secundario-morado:hover {
+  background-color: #512DA8; /* Un morado un poco más oscuro al pasar el ratón */
+}
+
+/* Si usas un ícono de carga, asegúrate de que sea visible en el botón */
+.secundario-morado .loader {
+    border-top: 2px solid white;
+}
+
     </style>
 </head>
 <body>
@@ -429,6 +450,8 @@
         <button id="btn-imprimir-vista" class="btn-accion btn-imprimir">Imprimir Vista</button>
         <button id="btn-abrir-modal-agregar" class="btn-accion btn-primary">Agregar Transacción</button>
         <button id="btn-procesar" class="btn-accion btn-secondary">Actualizar depósitos</button>
+        <button id="btn-registrar-alegra" class="secundario-morado">Registrar Alegra</button>
+  
     </div>
 </div>
 
@@ -1976,7 +1999,59 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 
+document.addEventListener('DOMContentLoaded', () => {
+          const btnAlegra = document.getElementById('btn-registrar-alegra');
 
+          if (btnAlegra) {
+              btnAlegra.addEventListener('click', () => {
+                  const textoOriginal = btnAlegra.innerHTML;
+
+                  // Notificamos al usuario y desactivamos el botón
+                  if (typeof mostrarNotificacion === 'function') {
+                      mostrarNotificacion('Iniciando registro en lote con Alegra...', 'info');
+                  } else {
+                      alert('Iniciando registro en lote con Alegra...');
+                  }
+                  btnAlegra.innerHTML = 'Registrando...';
+                  btnAlegra.disabled = true;
+
+                  // Llamamos a la función del backend (Code.gs)
+                  google.script.run
+                      .withSuccessHandler(resultado => {
+                          const mensaje = 'Proceso de registro con Alegra finalizado.';
+                          console.log(mensaje, resultado);
+                          if (typeof mostrarNotificacion === 'function') {
+                              mostrarNotificacion(mensaje + ' Actualizando vista...', 'success');
+                          } else {
+                              alert(mensaje);
+                          }
+
+                          // Restauramos el botón
+                          btnAlegra.innerHTML = textoOriginal;
+                          btnAlegra.disabled = false;
+
+                          // MUY IMPORTANTE: Recargamos la tabla para ver los cambios
+                          if (typeof cargarTransacciones === 'function') {
+                              cargarTransacciones();
+                          }
+                      })
+                      .withFailureHandler(error => {
+                          const mensajeError = `Error en el proceso de registro: ${error.message}`;
+                          console.error(mensajeError);
+                          if (typeof mostrarNotificacion === 'function') {
+                              mostrarNotificacion(mensajeError, 'error');
+                          } else {
+                              alert(mensajeError);
+                          }
+
+                          // Restauramos el botón
+                          btnAlegra.innerHTML = textoOriginal;
+                          btnAlegra.disabled = false;
+                      })
+                      .registrarPagosDesdeSheet(); // Esta es la función en Code.gs
+              });
+          }
+      });
 
 
 
